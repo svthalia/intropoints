@@ -1,5 +1,5 @@
-# Mentorpunten
-Welcome to the Mentorpunten repository. This repository includes the application that can be used to set up an
+# Intropoints
+Welcome to the Intropoints repository. This repository includes the application that can be used to set up an
 online scavenger hunt. The application can be used to create Tournaments and Teams of Users for these Tournaments. 
 Challenges can be created for each Tournament. The Challenges can be solved by the Teams by uploading a photo after
 which an administrator needs to approve (or decline) a Submission for a Challenge. If a Submission is approved, the
