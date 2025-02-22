@@ -75,7 +75,7 @@ async function addCoinsTransactionsToSubmission(submission: Submission) {
     return false;
   });
 
-  if (value && hasAcceptedSubmissionForSameChallengeAndTeam.value || accepted) {
+  if (value && (hasAcceptedSubmissionForSameChallengeAndTeam.value || accepted)) {
     if (!confirm("This team already has an accepted submission for this challenge, are you sure you want to grant them points for this submission as well?")) {
       refresh();
       return;
