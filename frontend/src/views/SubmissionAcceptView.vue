@@ -61,15 +61,23 @@ async function addCoinsTransactionsToSubmission(submission: Submission) {
   });
 }
 
-function processSubmission(value: boolean, event: Event) {
+ async function processSubmission(value: boolean, event: Event) {
   event.preventDefault();
 
   if (submission.value === null) {
     return;
   }
 
-  if (value && hasAcceptedSubmissionForSameChallengeAndTeam.value) {
+  const params = new URLSearchParams([["team", String(submission.value.team.id)], ["accepted", "true"], ["challenge", String(submission.value.challenge.id)]]);
+  const accepted = await ApiService.getChallengesSubmissions(params).then(result => {
+    return result.results.length > 0;
+  }).catch(() => {
+    return false;
+  });
+
+  if (value && (hasAcceptedSubmissionForSameChallengeAndTeam.value || accepted)) {
     if (!confirm("This team already has an accepted submission for this challenge, are you sure you want to grant them points for this submission as well?")) {
+      refresh();
       return;
     }
   }

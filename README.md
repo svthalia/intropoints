@@ -1,5 +1,5 @@
-# Mentorpunten
-Welcome to the Mentorpunten repository. This repository includes the application that can be used to set up an
+# Intropoints
+Welcome to the Intropoints repository. This repository includes the application that can be used to set up an
 online scavenger hunt. The application can be used to create Tournaments and Teams of Users for these Tournaments. 
 Challenges can be created for each Tournament. The Challenges can be solved by the Teams by uploading a photo after
 which an administrator needs to approve (or decline) a Submission for a Challenge. If a Submission is approved, the
@@ -26,12 +26,12 @@ a new shell and want to run the development server.
 11. Run `./manage.py createsuperuser` to create an administrator user.
 12. Run `./manage.py runserver` to start the development server locally.
 
-Now your backend server is setup and running on `localhost:8000`. The administrator interface can be accessed by going
+Now your backend server is set up and running on `localhost:8000`. The administrator interface can be accessed by going
 to `localhost:8000/admin`.
 
 ### Setup frontend
 1. Install at least version 17 of [NodeJS](https://nodejs.org/en).
-2. Clonse this repository (or if you have done that in the previous steps, skip this step).
+2. Clone this repository (or if you have done that in the previous steps, skip this step).
 3. Go to the `frontend` directory.
 4. Use `npm install` to install the required packages.
 5. Use `npm run dev` to run the development server.
@@ -138,7 +138,7 @@ admin by using `http://[Your domain]/admin-login` and the login credentials of t
 nginx config in `data/reverse-proxy/conf.d`.
 
 ## Development
-This section will explain some of the development steps that you have to take or were taken during development of the
+This section will explain some development steps that you have to take or were taken during development of the
 application.
 
 ### Setting environment variables for the frontend
