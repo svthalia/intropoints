@@ -1,5 +1,4 @@
 FROM python:3.11
-MAINTAINER Lars van Rhijn
 
 ENV PYTHONUNBUFFERED 1
 ENV DJANGO_SETTINGS_MODULE mentorpunten.settings.production

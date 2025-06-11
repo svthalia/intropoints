@@ -1,0 +1,61 @@
+services:
+  proxy:
+    image: ghcr.io/svthalia/scavengerhunt-nginx:latest
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - scavengerhunt-media:/volumes/media:ro
+      - scavengerhunt-static:/volumes/static:ro
+      - letsencrypt:/etc/letsencrypt:rw
+
+  database:
+    image: postgres:15.3
+    restart: always
+    volumes:
+      - ./data/database/data/:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: 'django'
+      POSTGRES_USER: 'django'
+      POSTGRES_PASSWORD: '[Postgres Password]'
+
+  backend:
+    image: ghcr.io/svthalia/scavengerhunt:latest
+    restart: always
+    depends_on:
+      - database
+    volumes:
+      - scavengerhunt-static:/mentorpunten/src/website/static/:rw
+      - scavengerhunt-media:/mentorpunten/src/website/media/:rw
+    environment:
+      DJANGO_SECRET_KEY: '[Django Secret key]'
+      POSTGRES_HOST: 'database'
+      POSTGRES_NAME: 'django'
+      POSTGRES_USER: 'django'
+      POSTGRES_PASSWORD: '[Postgres Password]'
+      VIRTUAL_HOST: '[Mentorpunten hostname]'
+      VIRTUAL_PROTO: 'uwsgi'
+      DJANGO_ALLOWED_HOST: '[Mentorpunten hostname]'
+      DJANGO_THALIA_API_BASE_URI: 'https://thalia.nu'
+      DJANGO_THALIA_API_AUTHORIZATION_ENDPOINT: '/user/oauth/authorize/'
+      DJANGO_THALIA_API_ACCESS_TOKEN_ENDPOINT: '/user/oauth/token/'
+      DJANGO_THALIA_API_OAUTH_CLIENT_ID: '[Thalia OAuth Client ID]'
+      DJANGO_THALIA_API_OAUTH_CLIENT_SECRET: '[Thalia OAuth Client Secret]'
+      DJANGO_THALIA_API_OAUTH_REDIRECT_URI: 'https://[Mentorpunten hostname]/thalia/callback'
+      DJANGO_THALIA_API_MEMBERS_URL: '/api/v2/members/me'
+      DJANGO_AWS_ACCESS_KEY_ID: '[AWS Access Key]'
+      DJANGO_AWS_SECRET_ACCESS_KEY: '[AWS Secret Access Key]'
+      DJANGO_AWS_S3_REGION_NAME: 'eu-west-1'
+      DJANGO_AWS_STORAGE_BUCKET_NAME: '[AWS Storage bucket name]'
+      DJANGO_AWS_DEFAULT_ACL: 'public-read'
+      DJANGO_AWS_MEDIACONVERT_ROLE_ARN: '[Mediaconvert role ARN]'
+      DJANGO_AWS_MEDIACONVERT_ENDPOINT_URL: '[Mediaconvert endpoint URL]'
+      DJANGO_AWS_PHOTO_COMPRESSION_ROLE_ARN: '[Photo compression role ARN]'
+
+volumes:
+  scavengerhunt-media:
+  scavengerhunt-static:
+  letsencrypt:
