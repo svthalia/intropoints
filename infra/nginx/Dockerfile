@@ -12,6 +12,6 @@ RUN npm run build-only
 
 FROM jonasal/nginx-certbot:4.3-alpine
 
-COPY infra/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY infra/nginx/nginx.conf /etc/nginx/conf.d/scavengerhunt.conf
 COPY --from=builder /app/dist /frontend
 
