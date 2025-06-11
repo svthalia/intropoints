@@ -1,30 +1,31 @@
-FROM python:3.11
+FROM python:3.11-slim-bookworm
+    
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_ENV=production \
+    TZ=Europe/Amsterdam \
+    PATH="/app/.venv/bin:$PATH" \
+    DJANGO_SETTINGS_MODULE=mentorpunten.settings.production
 
-ENV PYTHONUNBUFFERED 1
-ENV DJANGO_SETTINGS_MODULE mentorpunten.settings.production
-ENV PATH /root/.poetry/bin:${PATH}
+EXPOSE 8000
+WORKDIR /app
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+COPY resources/entrypoint.sh .
+CMD [ "/app/entrypoint.sh" ]
 
-WORKDIR /mentorpunten/src
-COPY resources/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY poetry.lock pyproject.toml /mentorpunten/src/
+# Install dependencies.
+RUN apt-get update && apt-get install -y --no-install-recommends  \
+    postgresql-client libpq-dev build-essential cron
 
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install --yes --quiet --no-install-recommends postgresql-client cron && \
-    rm --recursive --force /var/lib/apt/lists/* && \
-    \
-    mkdir --parents /mentorpunten/src/ && \
-    mkdir --parents /mentorpunten/log/ && \
-    mkdir --parents /mentorpunten/static/ && \
-    chmod +x /usr/local/bin/entrypoint.sh && \
-    \
-    curl -sSL https://install.python-poetry.org | python3 - && \
-    export PATH="/root/.local/bin:$PATH" && \
-    poetry config --no-interaction --no-ansi virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi --no-dev
+# This stage installs the dependencies that need to be installed in the final image.
+RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-cache --no-dev
+    
+COPY website /app/website
+WORKDIR /app/website
 
+VOLUME ["/volumes/static", "/volumes/media"]
 
-COPY website /mentorpunten/src/website/
-
-RUN echo "* * * * * /usr/local/bin/python /mentorpunten/src/website/manage.py runcrons" > /crontab && crontab /crontab
+RUN echo "* * * * * /app/.venv/bin/python /app/website/manage.py runcrons" > /crontab && crontab /crontab
