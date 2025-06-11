@@ -28,8 +28,8 @@ services:
     depends_on:
       - database
     volumes:
-      - scavengerhunt-static:/mentorpunten/src/website/static/:rw
-      - scavengerhunt-media:/mentorpunten/src/website/media/:rw
+      - scavengerhunt-static:/app/website/static/:rw
+      - scavengerhunt-media:/app/website/media/:rw
     environment:
       DJANGO_SECRET_KEY: '[Django Secret key]'
       POSTGRES_HOST: 'database'
