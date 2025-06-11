@@ -18,7 +18,7 @@ echo "Starting uwsgi server."
 uwsgi --chdir=/app/website \
     --module=mentorpunten.wsgi:application \
     --master --pidfile=/tmp/project-master.pid \
-    --socket=:8000 \
+    --http=:8000 \
     --processes=5 \
     --harakiri=20 \
     --post-buffering=16384 \

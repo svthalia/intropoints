@@ -3,7 +3,7 @@ services:
     image: ghcr.io/svthalia/scavengerhunt-nginx:latest
     restart: always
     depends_on:
-      - backend
+      - mentorpunten
     ports:
       - 80:80
       - 443:443
@@ -22,7 +22,7 @@ services:
       POSTGRES_USER: 'django'
       POSTGRES_PASSWORD: '[Postgres Password]'
 
-  backend:
+  mentorpunten:
     image: ghcr.io/svthalia/scavengerhunt:latest
     restart: always
     depends_on:
