@@ -7,7 +7,6 @@ RUN npm install
 # Include the .env file for build-time environment 
 
 COPY frontend .
-COPY frontend/.env .env
 RUN ls -la . && npm run build-only
 
 

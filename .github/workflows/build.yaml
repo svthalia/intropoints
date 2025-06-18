@@ -33,6 +33,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/svthalia/scavengerhunt
+      - run: ls -la ./frontend
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
