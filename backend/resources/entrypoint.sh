@@ -9,7 +9,7 @@ done
 cd /app/website
 
 ./manage.py migrate --no-input
-./manage.py collectstatic
+./manage.py collectstatic --no-input
 
 printenv > /etc/environment
 
