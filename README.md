@@ -62,5 +62,7 @@ VITE_API_OAUTH_REDIRECT_URI=http://localhost:5173/auth/callback
 VITE_API_LOGOUT_URL=/users/logout
 VITE_DEBUG=true
 ```
-7. Reload the development server (`npm run dev`) and you are good to go!
+7. Reload the development server (`npm run dev`) and you are good to go :)!
+
+
 
