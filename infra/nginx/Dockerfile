@@ -7,7 +7,7 @@ RUN npm install
 # Include the .env file for build-time environment 
 
 COPY frontend .
-RUN ls -la . && npm run build-only
+RUN npm run build-only
 
 
 FROM jonasal/nginx-certbot:4.3-alpine
