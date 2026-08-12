@@ -1,0 +1,31 @@
+version: 2
+
+multi-ecosystem-groups:
+  app-dependencies:
+    schedule:
+      interval: "quarterly"
+  action-dependencies:
+    schedule:
+      interval: "semiannually"
+
+updates:
+  # Backend dependencies
+  - package-ecosystem: "uv"
+    directory: "/backend"
+    patterns: ["*"]
+    versioning-strategy: increase-if-necessary
+    multi-ecosystem-group: "app-dependencies"
+
+
+  # Frontend dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    patterns: ["*"]
+    versioning-strategy: increase-if-necessary
+    multi-ecosystem-group: "app-dependencies"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "action-dependencies"

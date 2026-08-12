@@ -1,5 +1,13 @@
-export default interface Account {
-    id: number;
-    created_at: string;
-    balance: number;
+export interface TournamentAccount {
+  tournament: number
+  type: string
+  balance: number
+}
+
+export interface AccountTransaction {
+  id: number
+  amount: number
+  accepted: boolean
+  requested_at: string
+  description: string
 }

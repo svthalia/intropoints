@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!--
+    Bridge adapter that makes url parameters visible
+    to the backend server. Should only be displayed if the
+    server is really slow
+-->
+
+
+<!--                    -->
+<!-- Replacement script -->
+<!--                    -->
+
+
+<script>
+    // Retrieve the current query parameters / hash
+    const hash = window.location.hash;
+
+    // Make it such that the backend can see
+    // the query parameters
+    if (hash) {
+        window.location.href = "/auth/store/" + hash.replace('#', '?')
+    } else {
+        window.location.href = "/"
+    }
+</script>
+
+
+<!--              -->
+<!-- Main styling -->
+<!--              -->
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorization</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --text-color: #1f2937;
+            --bg-color: #f9fafb;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: -apple-system, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        #auth-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        #auth-loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #e5e7eb;
+            border-bottom-color: var(--primary-color);
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        p {
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+
+<!--                     -->
+<!-- Main body structure -->
+<!--                     -->
+
+
+<body>
+    <div id="auth-container">
+        <div id="auth-loader"></div>
+        <h1>Authorizing...</h1>
+        <p>You will be redirected in a few seconds.</p>
+    </div>
+</body>
+</html>

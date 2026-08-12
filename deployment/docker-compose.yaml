@@ -1,0 +1,131 @@
+# When composing the docker containers ensure that the workdig dir has:
+#     -> ./data - /shared - /static
+#                         - /media
+#
+#     -> ./data - /proxy  - /nginx.conf
+#                         - /conf.d     - /[SERVER-CONF].conf
+
+services:
+  # Build the Proxy container based on Nginx
+  #   - Gets built based on the gloabal config : ./data/proxy/nginx.conf
+  #     and the server proxy config:             ./data/proxy/conf.d/
+  #
+  # TODO! Handle automatic certificate renewal with a reboot a couple of
+  #       days before the certificate expires!
+  proxy:
+    container_name: "shw-proxy"
+    image: nginx:latest
+    restart: "unless-stopped"
+    depends_on:
+      - frontend
+    ports:
+      - 80:80
+      - 443:443                                                                                         # HTTPS
+    volumes:
+      # Nginx config
+      - /var/run/docker.sock:/tmp/docker.sock:ro                                                        # HTTPS
+      - ./data/shared/media/:/shw/media/
+      - ./data/shared/static/:/shw/static/
+      - ./data/proxy/conf.d/:/etc/nginx/conf.d/
+      - ./data/proxy/nginx.conf:/etc/nginx/nginx.conf
+      # Certbot config                                                                                  # HTTPS
+      - ./data/certbot/conf:/etc/letsencrypt                                                            # HTTPS
+      - ./data/certbot/www:/var/www/certbot                                                             # HTTPS
+    networks:
+      - shw-network
+
+  # Build a container that handles certificates for secure                                              # HTTPS
+  # communication                                                                                       # HTTPS
+  #   - Builds its dependent directories when pulled                                                    # HTTPS
+  ca-auth:                                                                                              # HTTPS
+    container_name: "certificate-authority"                                                             # HTTPS
+    image: certbot/certbot                                                                              # HTTPS
+    restart: "unless-stopped"                                                                           # HTTPS
+    volumes:                                                                                            # HTTPS
+      - ./data/certbot/conf:/etc/letsencrypt                                                            # HTTPS
+      - ./data/certbot/www:/var/www/certbot                                                             # HTTPS
+      - /var/run/docker.sock:/var/run/docker.sock                                                       # HTTPS
+    entrypoint: |                                                                                       # HTTPS
+          /bin/sh -c "                                                                                  # HTTPS
+          trap exit TERM;                                                                               # HTTPS
+          while :; do                                                                                   # HTTPS
+            certbot renew --post-hook "docker exec shw-proxy nginx -s reload";                          # HTTPS
+            sleep 1d & wait $${!};                                                                      # HTTPS
+          done;                                                                                         # HTTPS
+          "                                                                                             # HTTPS
+
+  # Build the Database container based on Postgres
+  #   - Needs the directory: ./data/database/
+  database:
+    container_name: "database"
+    image: postgres:15.3
+    restart: "no"
+    volumes:
+      - ./data/database/data/:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "django"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    networks:
+      - shw-network
+
+  # Build the Frontend container based on VueJS
+  #   - Gets built from the respository stored as: Scavenger-Hunt-Website/
+  frontend:
+    build: "./Scavenger-Hunt-Website/frontend"
+    restart: "no"
+    container_name: "frontend"
+    networks:
+      - shw-network
+
+  # Build the Backend container based on Django
+  #   - Needs the direcotries : ./data/shared/static
+  #                             ./data/shared/media
+  #
+  #   - Gets built from the respository stored as: Scavenger-Hunt-Website/
+  backend:
+    build: "./Scavenger-Hunt-Website/backend"
+    restart: "no"
+    container_name: "backend"
+    depends_on:
+      - database
+    volumes:
+      - ./data/shared/static/:/app/website/static/
+      - ./data/shared/media/:/app/website/media/
+    environment:
+      # Database options
+      POSTGRES_HOST: "database"
+      POSTGRES_NAME: "postgres"
+      POSTGRES_USER: "django"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      # Proxy options
+      VIRTUAL_HOST: "${DOMAIN_NAME}"
+      VIRTUAL_PROTO: "uwsgi"
+      # Django options
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY}"
+      DJANGO_ALLOWED_HOST: "${ALLOWED_HOST}"
+      DJANGO_BASE_URI: ${PROTOCOL}://${DOMAIN_NAME}/
+      # Thalia login API options
+      DJANGO_THALIA_API_BASE_URI: "${THALIA_BASE_URI}"
+      DJANGO_THALIA_API_AUTHORIZATION_ENDPOINT: "/user/oauth/authorize/"
+      DJANGO_THALIA_API_ACCESS_TOKEN_ENDPOINT: "/user/oauth/token/"
+      DJANGO_THALIA_API_OAUTH_CLIENT_ID: "${THALIA_OAUTH_APP_ID}"
+      DJANGO_THALIA_API_OAUTH_CLIENT_SECRET: "${THALIA_OAUTH_APP_SECRET}"
+      DJANGO_THALIA_API_OAUTH_REDIRECT_URI: "${PROTOCOL}://${DOMAIN_NAME}/login/thalia/callback"
+      DJANGO_THALIA_API_MEMBERS_URL: "/api/v2/members/me"
+      # Storage options
+      DJANGO_FILE_UPLOAD_STORAGE: "${STORAGE}"
+      # AWS S3 storage options
+      DJANGO_AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"                                            # AWS
+      DJANGO_AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"                                    # AWS
+      DJANGO_AWS_STORAGE_BUCKET_NAME: "${AWS_BUCKET_NAME}"                                        # AWS
+      DJANGO_AWS_S3_REGION_NAME: "${AWS_S3_REGION_NAME}"                                          # AWS
+      DJANGO_AWS_DEFAULT_ACL: "${AWS_DEFAULT_ACL}"                                                # AWS
+    networks:
+      - shw-network
+
+# Server internal network that bridges between
+# different containers
+networks:
+  shw-network:
+    driver: bridge

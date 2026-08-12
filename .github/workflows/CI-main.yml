@@ -1,0 +1,110 @@
+name: CI-main
+# Runs on every pull request targeting main.
+# No paths filter, a PR to main always runs everything regardless of what changed.
+# Runs: lint, format, typecheck, test, build (full CI)
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  #-------------------------------#
+  # BACKEND (Ruff + Django tests) #
+  #-------------------------------#
+  backend-lint:
+    name: "Backend: Ruff lint & format"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-backend
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+
+  backend-test:
+    name: "Backend: Django tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-backend
+
+      - name: Make and apply migrations
+        run: uv run ./manage.py makemigrations && uv run ./manage.py migrate
+
+      - name: Run Django tests
+        run: uv run python ./manage.py test
+
+  #-------------------------------------------------------------#
+  # FRONTEND (Linter + Prettier + Vitest + Vite build) #
+  #-------------------------------------------------------------#
+  frontend-lint:
+    name: "Frontend: Oxlint + ESLint + Prettier"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-frontend
+
+      - name: Oxlint
+        run: npx oxlint --config .oxlintrc.json .
+
+      - name: ESLint
+        run: npx eslint -c eslint.config.ts --max-warnings=0 .
+
+      - name: Prettier check
+        run: npm run format:check
+
+
+  frontend-typecheck:
+    name: "Frontend: vue-tsc type check"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-frontend
+
+      - name: Type check
+        run: npm run type:check
+
+
+  frontend-test:
+    name: "Frontend: Vitest"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-frontend
+
+      - name: Run tests
+        run: npm run test -- --run --reporter=verbose
+
+
+  frontend-build:
+    name: "Frontend: Vite build"
+    runs-on: ubuntu-latest
+    needs: [frontend-lint, frontend-typecheck, frontend-test]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-frontend
+
+      - name: Vite build
+        run: npm run build

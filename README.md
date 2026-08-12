@@ -1,68 +1,166 @@
-# Intropoints
-Welcome to the Intropoints repository. This repository includes the application that can be used to set up an
-online scavenger hunt. The application can be used to create Tournaments and Teams of Users for these Tournaments. 
-Challenges can be created for each Tournament. The Challenges can be solved by the Teams by uploading a photo after
-which an administrator needs to approve (or decline) a Submission for a Challenge. If a Submission is approved, the
-Challenge is closed for that Team and points are awarded.
+# Scavenger Hunt Website - ShW
 
-## Setup
-This project is built using both [Django](https://www.djangoproject.com) (for the backend) and 
-[VueJS](https://vuejs.org) (for the frontend). Both need to be set up (and connected) for development to work.
+Welcome to the Scavenger Hunt Website repository. This repository includes the application that can be used to set up an online scavenger hunt.
 
-### Setup backend
-1. First install at least [Python](https://www.python.org) 3.11 on your system.
-2. If `pip3` is not installed on your system, execute `apt install python3-pip` to install it.
-3. Also make sure `python3-dev` is installed on your system, execute `apt install python3-dev`.
-4. Install Poetry by following the steps on
-[their website](https://python-poetry.org/docs/#installing-with-the-official-installer). Make sure `poetry` is added 
-to `PATH` before continuing.
-5. Clone this repository.
-6. Go to the `backend` directory.
-7. Run `poetry install` to install the backend dependencies.
-8. Run `poetry shell` to start a shell with the dependencies loaded. This command needs to be run every time you open
-a new shell and want to run the development server.
-9. Go to the `website` directory.
-10. Run `./manage.py migrate` to initialize the database and load all migrations.
-11. Run `./manage.py createsuperuser` to create an administrator user.
-12. Run `./manage.py runserver` to start the development server locally.
+Still in progress as of now.
 
-Now your backend server is set up and running on `localhost:8000`. The administrator interface can be accessed by going
-to `localhost:8000/admin`.
+## Deployment
 
-### Setup frontend
-1. Install at least version 17 of [NodeJS](https://nodejs.org/en).
-2. Clone this repository (or if you have done that in the previous steps, skip this step).
-3. Go to the `frontend` directory.
-4. Use `npm install` to install the required packages.
-5. Use `npm run dev` to run the development server.
+We recommend creating a directory `/deployment` into which to pull **this** repository. This will be your working directory.
 
-### Connecting the frontend to the backend
-Now that both the frontend and the backend server are up and running, we need to supply the frontend with credentials
-such that it can connect to the backend service.
+This project can be deployed inside a `server` / `virtual machine` running an Ubuntu distribution (or `locally` if that is the default distribution). We provide you with necessary scripts to properly set up the Ubuntu environment and deploy the server.
 
-1. Log in on the administrator dashboard of the backend by going to `localhost:8000/admin` and logging in with your
-administrator account.
-2. Under `Django OAuth Toolkit`, add an `Application`.
-3. Provide the following settings: 
-- Redirect uris: http://localhost:5173/auth/callback
-- Client type: Public
-- Authorization grant type: Implicit
-- Name: VueJS Frontend
-- Skip Authorization: True
-4. Before saving the application, make sure to copy over the Client ID and Client Secret to some other location.
-5. Now save the application.
-6. Create a `.env` file in the `frontend` folder of the repository. The `.env` file should have the following content:
-```
-VITE_API_BASE_URI=http://localhost:8000
-VITE_API_AUTHORIZATION_ENDPOINT=/oauth/authorize/
-VITE_API_ACCESS_TOKEN_ENDPOINT=/oauth/token/
-VITE_API_OAUTH_CLIENT_ID=[Client ID you copied over]
-VITE_API_OAUTH_CLIENT_SECRET=[Client Secret you copied over]
-VITE_API_OAUTH_REDIRECT_URI=http://localhost:5173/auth/callback
-VITE_API_LOGOUT_URL=/users/logout
-VITE_DEBUG=true
-```
-7. Reload the development server (`npm run dev`) and you are good to go :)!
+You will also need to have [Thalia](https://thalia.nu/) admin access rights to either their [main website](https://thalia.nu/) or [staging website](https://staging.thalia.nu/)
+
+In order to be able to run these scripts first perform:
+
+`sudo chmod +x Scavenger-Hunt-Website/deployment/deploy.sh`
+
+### Deployment actions:
+
+To view the actions that are possible with the deployment script run:
+
+`sudo ./Scavenger-Hunt-Website/deployment/deploy.sh -h`
+
+### Starting the deployment
+
+By default, the script will try to set up the whole deployment environment. This includes:
+
+- Installing the necessary dependencies;
+- Copying build files;
+- Copying configuration files;
+- Setting up the environment variables;
+- Setting up the cache for quick rebuilds;
+- Setting up OAuth applications both externally(note) and internally;
+
+All you need to do, is to try to run the following:
+
+`sudo ./Scavenger-Hunt-Website/deployment/deploy.sh`
+
+### Domain Name
+
+The script will ask you for a `Domain Name` - not important if running locally, it should only match the name assigned to the OAuth App (if already created). If, instead run on a server this should be your full server domain name for obvious reason (similar to **example.domain.com**).
+
+By default, this will be `scavengerhunt.thalia.nu` - since that is the most commonly rented domain
+name for the Scavenger Hunt event.
+
+### Deployment choices
+
+The script will ask you whether you want to deploy in **Production** (prod - default) or **Development** (dev). This matters since the **Production** option is way stricter than the development one:
+
+- It enforces HTTPs;
+- It enforces proper Secret Generation;
+
+On the other hand, the **Development** option lets you choose the following:
+
+#### Prod Options - Storage Method
+
+The script will ask you to make a choice between [LOCAL] or [AWS S3] as a media storage method.
+
+#### -- LOCAL --
+This method stores all media on the local disk. This method does not support compression or generating thumbnails.
+
+#### -- AWS S3 --
+Choosing S3 will store all media on a remote AWS cloud server. This service also provides some extra perks, namely file compression and thumbnail generation. Other input must be provided to accomodate for this service:
+
+##### - AWS Bucket Name
+The name of the bucket server in use.
+
+##### - AWS Region Name
+The region where the S3 bucket is hosted.
+
+##### - AWS Access Key ID
+The AWS access key ID.
+
+##### - AWS Secret Access Key
+The linked secret key to that of the ID.
+
+##### - AWS Default ACL (optional)
+The access control list to control server traffic.
 
 
+Note that only AWS cloud storage is supported (no other cloud method).
 
+
+#### Dev Options - Protocol
+
+The script will ask you for a choice between HTTP / HTTPs. Locally, only the HTTP version is supported (and therefore it is the one selected by default).
+
+
+### OAuth Application creation
+
+In order to automate [Thalia](https://thalia.nu/) OAuth app creation, you will need to input your (superuser) account credentials when prompted.
+
+If working with the staging website (in development) input those credentials, otherwise use the ones
+for the main website.
+
+#### OTP Token
+
+You will also need to enter your **OTP** token, and the easiest method to retrieve it is to have your
+**OTP** token be generated by an authenticator app such as [Microsoft Authenticator](https://play.google.com/store/apps/details?id=com.azure.authenticator&hl=en).
+
+
+#### Manual Management
+
+If you do not have access rights to the Thalia Admin page, or do not wish to use the automatic app
+creation provided by the script, then you can simply link your OAuth environment with Thalia's one by entering `y`, when prompted whether to create the app manually.
+
+Afterwards, the script will prompt you with inputting the OAuth App's `Client ID` and `Client Secret`.
+Simply copy and paste them respectively and wait for the script to register them.
+
+**NOTE**: Such an app is managed manually, so when cleaning the cache, it won't be automatically deleted.
+
+## Finishing up
+
+After running the deployment script and inputting the right information, the build process for the docker deployment procedure will start. Once the whole build is finished, the website will be accessible from the outside.
+
+You can also view the running state of the deployment by entering:
+
+`sudo docker compose up`
+
+##### Discovery - Server
+
+After deploying - you can discover the website via the set `Domain Name`.
+
+##### Discovery - Local
+
+After deploying - you can discover the website via `localhost`.
+
+##### Discovery - Virtual Machine
+
+We recommend you use something similar to [VirtualBox](https://www.virtualbox.org/).
+
+After deploying - you can discover the website via the IP address of the `virtual interface` between your host and the virtual guest.
+
+## Having a running app
+
+### Rebuilding
+
+After executing all the previously mentioned steps, the application should now be properly deployed. Enjoy!
+
+If you want to rebuild the application with any extra additions added to the frontend and / or backend,
+then just run:
+
+`sudo ./Scavenger-Hunt-Website/deployment/deploy.sh -b`
+
+This simply rebuilds the containers, while keeping all the environment variables, and ensures that
+the right migrations are applied such that the database integrity is maintained.
+
+### Quitting
+
+To stop the current deployment just run:
+
+`sudo ./Scavenger-Hunt-Website/deployment/deploy.sh -q`
+
+And to clean simply use:
+
+`sudo ./Scavenger-Hunt-Website/deployment/deploy.sh -c`
+
+**NOTE**: cleaning the cache is not usually recommended, since all the information stored there
+is really hard to generate, hence only do it if completely sure.
+
+### Anything else
+
+For any additional deploy actions run:
+
+`sudo ./Scavenger-Hunt-Website/deployment/deploy.sh -h`

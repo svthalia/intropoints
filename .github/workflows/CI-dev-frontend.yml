@@ -1,0 +1,57 @@
+name: CI-dev-frontend
+# Runs on every pull request targeting the dev branch.
+# Only triggers when frontend files actually changed.
+# Runs: lint, format, typecheck, test
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/CI-dev-frontend.yml"
+      - ".github/actions/setup-frontend/**"
+
+jobs:
+  lint:
+    name: "Oxlint + ESLint + Prettier"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses : actions/checkout@v4
+      - uses: ./.github/actions/setup-frontend
+
+      - name: Lint (oxlint + eslint)
+        run: npm run lint:check
+
+      - name: Prettier check
+        run: npm run format:check
+
+
+  typecheck:
+    name: "vue-tsc type check"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-frontend
+
+      - name: Type check
+        run: npm run type:check
+
+
+  test:
+    name: "Vitest"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-frontend
+
+      - name: Run tests
+        run: npm run test -- --run

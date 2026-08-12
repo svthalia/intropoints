@@ -1,6 +1,7 @@
 export default interface User {
-  id: number;
-  display_name: string;
-  profile_image: string;
-  user_permissions: string[];
+  id: number
+  username: string
+  profile_photo: string
+  initials: string
+  permissions: string[]
 }

@@ -1,0 +1,79 @@
+.hero-card {
+  background: linear-gradient(135deg, var(--dark) 0%, #2a2a2a 100%);
+  color: var(--text-light);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-hero);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hero-kicker,
+.section-kicker {
+  margin: 0 0 0.5rem 0;
+  color: var(--primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-card h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-family: "Gill Sans MT Condensed", sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.hero-text {
+  margin: 1rem 0 0 0;
+  max-width: 650px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.dark-card {
+  background: var(--dark);
+  color: var(--text-light);
+  border-radius: var(--radius-md);
+  padding: 1.35rem;
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Optional hover effect */
+.dark-card-hover {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.dark-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(230, 34, 114, 0.55);
+  background: var(--dark-hover);
+}
+
+.icon-box {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  font-size: 1.3rem;
+}
+
+@media (max-width: 600px) {
+  .hero-card {
+    padding: 1.3rem;
+    border-radius: 16px;
+  }
+
+  .dark-card {
+    padding: 1.1rem;
+  }
+}

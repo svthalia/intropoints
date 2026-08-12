@@ -1,0 +1,49 @@
+name: CI-dev-backend
+# Runs on every pull request targeting the dev branch.
+# Only triggers when backend files actually changed.
+# Runs: lint, format, test
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "backend/**"
+      - ".github/workflows/CI-dev-backend.yml"
+      - ".github/actions/setup-backend/**"
+
+jobs:
+  lint:
+    name: "Ruff lint & format"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-backend
+
+      - name: Ruff lint
+        run: uv run ruff check
+
+      - name: Ruff format check
+        run: uv run ruff format --check
+
+
+  test:
+    name: "Django tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-backend
+
+      - name: Make and apply migrations
+        run: uv run ./manage.py makemigrations
+
+      - name: apply migrations
+        run: uv run ./manage.py migrate
+
+      - name: Run Django tests
+        run: uv run python ./manage.py test

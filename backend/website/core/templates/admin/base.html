@@ -1,0 +1,135 @@
+<!-- ------------------------------------------------------ -->
+<!-- This template extends the base admin template in order -->
+<!-- to provide friendlier Thalia colors; and to deprecate  -->
+<!-- some unwanted features.                                -->
+<!-- ------------------------------------------------------ -->
+
+<!-- Prepare the template -->
+{% extends 'admin/base.html' %}
+{% load static %}
+
+<!-- New styling block -->
+{% block extrastyle %}
+    <!-- Inherit previous styling and component options -->
+    {{ block.super }}
+
+        <!-- In this section you can find additional HTML -->
+        <!-- blocks that either extend or overwrite the   -->
+        <!-- ones in the admin template                   -->
+
+
+        <!-- Import the 'Oswald' google font -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;700&display=swap" rel="stylesheet">
+
+        <style>
+            /* Root selector variable definitions.
+             * Anything on the website inherits these variables
+             *
+             * The main theme for the admin page will always be
+             * a dark theme, hence we override both light and dark
+             */
+            :root,
+            html,
+            html[data-theme="light"],
+            html[data-theme="dark"] {
+                /* Base colours */
+                --thalia-magenta: #E62272;
+                --thalia-black: black;
+                --thalia-white: white;
+                --thalia-magenta-dark: #7a153e;
+
+                /* Accents */
+                --accent: var(--thalia-white);
+
+                /* Component base colours */
+                --primary: var(--thalia-magenta);
+                --secondary: var(--thalia-magenta-dark);
+
+                /* Hyperlinks */
+                --link-fg: var(--thalia-white);
+                --link-hover-color: var(--thalia-magenta-dark);
+                --link-selected-fg: var(--thalia-magenta);
+
+                /* Base header */
+                --header-bg: var(--thalia-magenta);
+                --header-color: var(--thalia-white);
+
+                /* Admin buttons */
+                --default-button-bg: var(--thalia-magenta-dark);
+                --default-button-hover-bg: var(--thalia-magenta);
+                --button-hover-bg: var(--thalia-magenta);
+
+
+                /* Admin breadcrumb header */
+                /* - Header that shows up in order to navigate within the page. */
+                /* - Usually contains (Home, Overview...) */
+                --breadcrumbs-link-fg: var(--thalia-white);
+                --breadcrumbs-fg: --thalia-white;
+                --breadcrumbs-bg: var(--thalia-magenta-dark);
+
+                /* The selected row when accessing an admin model panel */
+                --selected-row: var(--thalia-magenta-dark);
+            }
+
+            body {
+                height: 100%;
+            }
+
+            /*
+             * Font styling and bold text for a more
+             * Thalia-like look
+             */
+
+            /* Style the title of the page */
+            #site-name a {
+                font-weight: 800 !important;
+            }
+
+            /* Style the font used by all text */
+            *, body, input, select, textarea, button {
+                font-family: "Oswald", -apple-system, serif !important;
+            }
+
+            /*
+             * Admin panel content styling - anything that is
+             * included in the main admin table (model rows and actions)
+             */
+
+            /* Style each table row text */
+            .module th a,
+            .module td a,
+            #content-main .module th a {
+                color: var(--thalia-white) !important;
+            }
+
+            /* hover animation for each table row text */
+            .module th a:hover,
+            .module td a:hover {
+                text-decoration: underline !important;
+            }
+
+
+            /*
+             * Header components - these are the components that sit on
+             * the top header inside the admin panel
+             */
+
+            /* disabling changing themes, since we only want to support one */
+            .theme-toggle {
+                display: none !important;
+            }
+
+
+            /*
+             * User tools styling - these are the quick actions
+             * on the top-right side of the admin site
+             */
+
+            /* Slight hover animation */
+            #user-tools a:focus, #user-tools a:hover {
+                text-decoration: none !important;
+            }
+        </style>
+{% endblock %}

@@ -1,0 +1,73 @@
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+# Manually running this check:
+  #  pre-commit run --all-files --hook-stage pre-commit
+#  Or for the push stage (which includes all pre-commit checks):
+  #  pre-commit run --all-files --hook-stage pre-push
+
+  #----------------------------------#
+  # Backend: Django (Ruff)           #
+  #----------------------------------#
+  # Ruff replaces both Black (formatting) and flake8/isort (linting).
+  # pre-commit manages an isolated virtualenv for it – no manual installation needed.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.7
+    hooks:
+      # Fixes everything except the ones labeled as 'unfixable'
+      # Manual: cd backend && uv run ruff check --fix --exit-non-zero-on-fix
+      - id: ruff
+        name: ruff
+        alias: ruff-commit
+        args: [--exit-non-zero-on-fix]
+        stages: [pre-commit, pre-push]
+        files: ^backend/
+
+      # Formatter stays the same for both
+      # Manual: cd backend && uv run ruff format --fix --exit-non-zero-on-fix
+      - id: ruff-format
+        stages: [pre-commit, pre-push]
+        files: ^backend/
+
+  #--------------------------------------#
+  # Frontend: Vue/JS (Prettier & ESLint) #
+  #--------------------------------------#
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0  # pre-commit-autoupdate: ignore
+    hooks:
+      # Manual: cd frontend && npm run format:fix .
+      - id: prettier
+        name: "Prettier (frontend)"
+        files: ^frontend/
+        types_or: [javascript, ts, vue, css, scss, json]
+        additional_dependencies:
+          - prettier@3.8.1
+
+  - repo: local
+    hooks:
+      #--- ON COMMIT ---#
+      # Manual: cd frontend && npm run lint:fix .
+      - id: eslint-frontend
+        name: "OXLint + ESLint (frontend) - commit"
+        language: system
+        entry: bash -c 'cd frontend && npm run lint:check'
+        files: ^frontend/.*\.(js|ts|jsx|tsx|vue)$
+        pass_filenames: false
+        stages: [pre-commit]
+
+      #--- ON PUSH ---#
+      # Manual: cd frontend && npm run lint:fix .
+      - id: eslint-frontend-push
+        name: "OXLint + ESLint (frontend) - push"
+        language: system
+        entry: bash -c 'cd frontend && npm run lint:check'
+        files: ^frontend/.*\.(js|ts|jsx|tsx|vue)$
+        pass_filenames: false
+        stages: [pre-push]

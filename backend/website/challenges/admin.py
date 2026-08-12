@@ -1,16 +1,72 @@
-from autocompletefilter.admin import AutocompleteFilterMixin
-from autocompletefilter.filters import AutocompleteListFilter
-from django.contrib import admin, messages
-from django.utils.html import format_html
+from django import forms
+from django.conf import settings
+from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from rangefilter.filters import DateRangeFilter
 
-from challenges.models import Challenge, Submission
+from challenges.models import Challenge, ChallengeQuerySet  # noqa: F401
+from submissions.models import Submission
+
+# --------------------------- #
+# Custom Challenge Admin Form #
+# --------------------------- #
+
+
+class ChallengeAdminForm(forms.ModelForm):
+    """
+    Class that represents and extension form for the
+    admin panel for Submission Addition.
+
+    ----
+
+    **Contains** the settings:
+
+    - ``thumbnail_source``: The file upload form field
+    """
+
+    thumbnail_source = forms.FileField(
+        label="Upload a thumbnail (Optional)",
+        widget=forms.ClearableFileInput(attrs={"accept": ", ".join(sorted(settings.ALLOWED_MIME_TYPES))}),
+        required=False,
+    )
+
+    class Meta:
+        model = Challenge
+        fields = (
+            "name",
+            "slug",
+            "tournament",
+            "description",
+            "thumbnail_source",
+            "enabled",
+            "points",
+            "active_from",
+            "active_until",
+            "submission_visibility",
+        )
+
+
+# --------------------- #
+# Challenge Admin Panel #
+# --------------------- #
 
 
 @admin.register(Challenge)
-class ChallengeAdmin(ImportExportModelAdmin):
-    """Challenge Admin."""
+class ChallengeAdminPanel(ImportExportModelAdmin):
+    """
+    Class that represents the admin panel configuration
+    for the Challenge model.
+
+    ----
+
+    **Contains** the forms:
+
+    - ``list_display``: The list display fields
+    - ``search_fields``: The search fields
+    - ``ordering_fields``: The fields that affect ordering
+    - ``prepopulated_fields``: The prepopulated slug field
+    - ``actions``: The bulk enable/disable actions
+    """
 
     list_display = (
         "name",
@@ -19,156 +75,164 @@ class ChallengeAdmin(ImportExportModelAdmin):
         "active_until",
         "points",
         "number_of_submissions",
-        "active",
+        "enabled",
+        "submission_visibility",
     )
-    search_fields = ("name",)
+
+    search_fields = ("name", "tournament__name")
     ordering = (
         "-active_from",
         "-active_until",
         "name",
     )
+
     list_filter = (
+        "enabled",
         "tournament",
-        (
-            "active_from",
-            DateRangeFilter,
-        ),
-        (
-            "active_until",
-            DateRangeFilter,
-        ),
+        ("active_from", DateRangeFilter),
+        ("active_until", DateRangeFilter),
+        "submission_visibility",
     )
+
     prepopulated_fields = {"slug": ("name",)}
     actions = ["disable_challenges", "enable_challenges"]
 
-    def disable_challenges(self, request, queryset):
-        """Accept reservations."""
-        self._change_disabled(queryset, True)
+    # ----------- #
+    # Custom Form #
+    # ----------- #
 
-    disable_challenges.short_description = "Disable selected challenges"
+    form = ChallengeAdminForm
 
-    def enable_challenges(self, request, queryset):
-        """Accept reservations."""
-        self._change_disabled(queryset, False)
-
-    enable_challenges.short_description = "Enable selected challenges"
-
-    def _change_disabled(self, queryset, value):
-        """Change disabled on queryset."""
-        queryset.update(disabled=value)
-
-    def number_of_submissions(self, obj: Challenge):
-        """Get the number of submissions."""
-        return Submission.objects.filter(challenge=obj).count()
-
-    def active(self, obj: Challenge):
-        """Get whether a Challenge is currently active."""
-        return obj.active
-
-    active.boolean = True
-
-
-@admin.register(Submission)
-class SubmissionAdmin(AutocompleteFilterMixin, admin.ModelAdmin):
-    """Submission Admin."""
-
-    list_display = (
-        "team",
-        "challenge",
-        "tournament",
-        "created",
-        "updated",
-        "accepted",
-        "type",
-    )
-    fields = (
-        "challenge",
-        "tournament",
-        "team",
-        "created",
-        "updated",
-        "file_tag",
-        "file",
-        "accepted",
-        "points_transaction",
-        "coins_transaction",
-    )
-    readonly_fields = (
-        "file_tag",
-        "created",
-        "updated",
-        "points_transaction",
-        "coins_transaction",
-    )
-
-    ordering = ("-created",)
-    list_filter = (
-        ("team", AutocompleteListFilter),
-        ("challenge", AutocompleteListFilter),
-        ("tournament", AutocompleteListFilter),
-        "accepted",
-    )
-
-    def type(self, obj: Submission):
-        """Get file type."""
-        if obj.file.is_photo:
-            return "Photo"
-        elif obj.file.is_video:
-            return "Video"
-        else:
-            return "Other"
-
-    def file_tag(self, obj: Submission):
-        """Print image in changeform view."""
-        if obj.file.is_photo:
-            return format_html(
-                '<img src="{}" width="400px" style="max-width: 100%;" />'.format(
-                    obj.file.compressed_file.url
-                    if obj.file.compressed_file.name
-                    else obj.file.file.url
-                )
-            )
-        elif obj.file.is_video:
-            return format_html(
-                '<video controls style="max-width: 100%; max-height: 600px;"> \
-                    <source src="{}"/> \
-                    Your browser does not support the video tag. \
-                </video>'.format(
-                    obj.file.compressed_url.url
-                    if obj.file.compressed_file.name
-                    else obj.file.file.url
-                )
-            )
-        else:
-            return "No format available for this file."
-
-    file_tag.short_description = "Preview"
-
-    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
-        """Display warning for already accepted submissions."""
-        if object_id:
-            obj = self.get_object(request, object_id)
-            if (
-                Submission.objects.filter(
-                    challenge=obj.challenge, team=obj.team, accepted=True
-                )
-                .exclude(pk=obj.pk)
-                .exists()
-            ):
-                self.message_user(
-                    request,
-                    "This team already has an accepted Submission for this Challenge.",
-                    level=messages.WARNING,
-                )
-        return super().changeform_view(request, object_id, form_url, extra_context)
+    # ------------------ #
+    # Base Functionality #
+    # ------------------ #
 
     def save_model(self, request, obj, form, change):
-        """Create a Transaction for the amount of points of the challenge when a submission gets accepted."""
-        if obj.accepted is True:
-            obj.create_points_transaction()
-            obj.create_coins_transaction()
+        """
+        Overrides the main save functionality in order to pass
+        a source file to the challenge ``save(...)`` call.
 
-        super().save_model(request, obj, form, change)
+        ----
 
-    class Media:
-        """Necessary to use AutocompleteFilter."""
+        :param request: The HTTP request that was made
+        :type request:  django.http.HttpRequest
+
+        :param obj: The challenge instance
+        :type obj:  Challenge
+
+        :param form: The admin form
+        :type form:  django.forms.ModelForm
+
+        :param change: Whether the model is changed or not
+        :type change:  bool
+
+        :return:
+        """
+
+        thumbnail_source = form.cleaned_data.get("thumbnail_source")
+
+        if thumbnail_source:
+            obj.save(thumbnail_source=thumbnail_source)
+
+    # ----------------------- #
+    # Additional form actions #
+    # ----------------------- #
+
+    def disable_challenges(self, request, queryset):
+        """
+        Disables all challenges in the queryset.
+
+        ----
+
+        :param request:  The HTTP request being made
+        :type request:  HttpRequest
+
+        :param queryset: The relevant queryset
+        :type queryset:  ChallengeQuerySet
+
+        :return: None
+        :rtype: None
+        """
+
+        self._change_disabled(queryset, True)
+
+    def enable_challenges(self, request, queryset):
+        """
+        Enables all challenges in the queryset.
+
+        ----
+
+        :param request:  The HTTP request being made
+        :type request:  HttpRequest
+
+        :param queryset: The relevant queryset
+        :type queryset:  ChallengeQuerySet
+
+        :return: None
+        :rtype: None
+        """
+
+        self._change_disabled(queryset, False)
+
+    # ----------------- #
+    # Additional Fields #
+    # ----------------- #
+
+    def number_of_submissions(self, obj):
+        """
+        Counts the number of submissions for a
+        given challenge.
+
+        ----
+
+        :param obj: The challenge instance
+        :type obj:  Challenge
+
+        :return: The number of submissions for the challenge
+        :rtype:  int
+        """
+
+        return Submission.objects.filter(challenge=obj).count()
+
+    def active(self, obj):
+        """
+        Checks whether a Challenge is currently active.
+
+        ----
+
+        :param obj: The challenge instance
+        :type obj:  Challenge
+
+        :return: True if the challenge is active, False otherwise
+        :rtype: bool
+        """
+        return obj.enabled
+
+    # Additional field setup.
+    # Somewhat registering base descriptions for them.
+    disable_challenges.short_description = "Disable selected challenge"
+    enable_challenges.short_description = "Enable selected challenge"
+    active.boolean = True
+
+    # ------------------ #
+    # Base Functionality #
+    # ------------------ #
+
+    def _change_disabled(self, queryset, value):
+        """
+        Sets the disabled field on all challenges in the
+        queryset to the given value.
+
+        ----
+
+        :param queryset: The relevant queryset
+        :type queryset:  ChallengeQuerySet
+
+        :param value: The new value for the disabled field
+        :type value:  bool
+
+        :return: None
+        :rtype: None
+        """
+
+        queryset.update(disabled=value)

@@ -1,0 +1,69 @@
+<!-- This is the only way that I found in which I can override   -->
+<!-- the color of the PrismJSON renderer. The settings one seems -->
+<!-- to always fail.                                             -->
+<!--                                                             -->
+<!-- For now, this is good enough, but it splits responsibility, -->
+<!-- which is quite annoying.                                    -->
+<!--                                                             -->
+<!--                                                             -->
+<!-- There are some other settings in here that make it easier   -->
+<!-- override certain components for a better style              -->
+
+<!-- Prepare the template -->
+{% extends "drf_spectacular/redoc.html" %}
+
+<!-- Extend the initial header -->
+{% block head %}
+
+    <!-- Inherit previous styling and components -->
+    {{ block.super }}
+
+    <!-- In this section you can find additional HTML -->
+    <!-- blocks that either extend or overwrite the   -->
+    <!-- ones in the redoc template                   -->
+    <style>
+        /* Success icon for the right panel.   */
+        /* Otherwise, this inherits the same   */
+        /* colour as `success` in the settings */
+        li.tab-success.react-tabs__tab--selected,
+        li[id*="tab:"][aria-selected="true"].tab-success {
+            color: #000000 !important;
+        }
+
+        /* JSON token styling */
+
+        /* JSON key styling */
+        .redoc-json .property.token.string {
+            color: #ffffff !important;
+        }
+
+        /* JSON number styling */
+        .redoc-json .token.number {
+            color: #c22b58 !important;
+        }
+
+        /* JSON string styling */
+        .redoc-json .token.string {
+            color: #f06ea3 !important;
+        }
+
+        .redoc-json .token.boolean {
+            color: #3e6bde !important;
+        }
+
+        /* JSON brackets, quotes, semi-colons... styling */
+        .redoc-json .token.punctuation {
+            color: #ffffff !important;
+        }
+
+        /* JSON hyperlink styling */
+        .redoc-json a {
+            color: #f06ea3 !important;
+        }
+
+        /* JSON active hyperlink styling */
+        .redoc-json a:hover {
+            color: #73344d !important;
+        }
+    </style>
+{% endblock %}

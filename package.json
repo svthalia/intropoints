@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-oxlint": "^1.62.0",
+    "jiti": "^2.6.1",
+    "oxlint": "^1.62.0"
+  },
+  "devDependencies": {
+    "@vitest/eslint-plugin": "^1.6.16",
+    "@vue/eslint-config-typescript": "^14.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "npm-run-all2": "^8.0.4"
+  }
+}

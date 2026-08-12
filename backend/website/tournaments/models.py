@@ -1,184 +1,198 @@
-from datetime import datetime
-
-import pytz
-from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
-from queryable_properties.managers import QueryablePropertiesManager
 
-from queryable_properties.properties import RangeCheckProperty
-
-from store.models import Store, Item as StoreItem
-from transactions.models import Account, Transaction
-
-User = get_user_model()
+# -------------------------- #
+# Tournament Custom Queryset #
+# -------------------------- #
 
 
 class TournamentQueryset(models.QuerySet):
-    """Tournament queryset."""
+    """
+    Class that represents a custom QuerySet for the
+    Challenge model.
+    """
 
     def active(self):
-        """Only active Tournaments."""
+        """
+        Filters all active tournaments. Active means the
+        current time is between active_from and active_until,
+        and the challenge is not disabled.
+
+        ----
+
+        :param: None
+
+        :return: The active set of tournaments
+        :rtype: TournamentQueryset
+        """
+
         current_time = timezone.now()
-        return self.filter(active_from__lte=current_time, active_until__gt=current_time)
+        return self.filter(
+            models.Q(active_from__isnull=True) | models.Q(active_from__lte=current_time),
+            models.Q(active_until__isnull=True) | models.Q(active_until__gt=current_time),
+        )
 
     def revealed(self):
-        """Only revealed Tournaments."""
+        """
+        Filters all revealed tournaments. Revealed means the current
+        time is after active_from and the challenge is not disabled.
+
+        ----
+
+        :param: None
+
+        :return: The revealed set of tournaments
+        :rtype: TournamentQueryset
+        """
+
         current_time = timezone.now()
-        return self.filter(active_from__lte=current_time)
+        return self.filter(models.Q(active_from__isnull=True) | models.Q(active_from__lte=current_time))
 
 
-class TournamentManager(QueryablePropertiesManager):
-    """Custom manager for Tournaments."""
-
-    def get_queryset(self):
-        """Get product Queryset."""
-        return TournamentQueryset(self.model, using=self._db)
-
-    def active_tournaments(self):
-        """Only active Tournaments."""
-        return self.get_queryset().active()
-
-    def revealed_tournaments(self):
-        """Only revealed Tournaments."""
-        return self.get_queryset().revealed()
+# ----------------- #
+# Tournament Models #
+# ----------------- #
 
 
 class Tournament(models.Model):
-    """Tournament class."""
+    """
+    Class that represents a tournament. This is the base of
+    the application.
 
-    name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True, max_length=100)
-    active_from = models.DateTimeField()
-    active_until = models.DateTimeField()
-    active = RangeCheckProperty("active_from", "active_until", timezone.now)
-    store = models.OneToOneField(
-        Store, on_delete=models.SET_NULL, null=True, blank=True
+    ----
+
+    The ``Meta`` class **contains** the integrity constraints
+    for tournaments.
+
+    ----
+
+    **Contains** the fields:
+
+    - ``name``: The name of the tournament
+    - ``slug``: The unique string identifier of the tournament
+    - ``active_from``: The time the tournament begins being active
+    - ``active_until``: The deadline at which the tournament ends being active
+    """
+
+    # --------------- #
+    # Database fields #
+    # --------------- #
+
+    name = models.CharField(
+        help_text="The name of the tournament",
+        max_length=100,
+        null=False,
+        blank=False,
+        default="",
     )
+    """ The name of the tournament """
 
-    objects = TournamentManager()
+    slug = models.SlugField(
+        help_text="The unique string identifier of the tournament",
+        unique=True,
+        null=False,
+        blank=False,
+        default="",
+        max_length=100,
+    )
+    """ The unique string identifier of the tournament """
+
+    active_from = models.DateTimeField(
+        help_text="The time the tournament begins being active",
+        null=True,
+        blank=False,
+        default=None,
+    )
+    """ The deadline at which the tournament ends being active """
+
+    active_until = models.DateTimeField(
+        help_text="The deadline at which the tournament ends being active",
+        null=True,
+        blank=False,
+        default=None,
+    )
+    """ The deadline at which the tournament ends being active  """
+
+    # -------------- #
+    # Custom Manager #
+    # -------------- #
+
+    objects = TournamentQueryset.as_manager()
+
+    # --------------- #
+    # Base Meta Class #
+    # --------------- #
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(active_from__lte=models.F("active_until")),
+                name="Tournament start date cannot be after tournament end date",
+            ),
+        ]
+        """
+        This constraint makes sure the start time (active_from) is before
+        or at the same time as the end time (active_until).
+        """
+
+    # ------------------ #
+    # Base Functionality #
+    # ------------------ #
 
     def __str__(self):
-        """Convert this object to string."""
-        return f"{self.name}"
+        """
+        Converts the tournament to a string object
+        based on its name.
+
+        ----
+
+        :param: None
+
+        :return: The string representation of the tournament
+        :rtype: str
+        """
+
+        return f"Tournament {self.name}"
+
+    # --------------------- #
+    # Additional Properties #
+    # --------------------- #
 
     @property
     def revealed(self):
-        """Get whether tournament is revealed."""
-        timezone = pytz.timezone(settings.TIME_ZONE)
-        current_time = timezone.localize(datetime.now())
+        """
+        Get whether tournament is revealed. A revealed tournament is
+        one whose start date is in the past, it is revealed to the players.
 
+        ----
+
+        :param: None
+
+        :return: ``True`` if it is revealed, ``False`` otherwise
+        :rtype: bool
+        """
+
+        current_time = timezone.now()
         return self.active_from is None or self.active_from <= current_time
 
-    class Meta:
-        """Meta class."""
-
-        ordering = ("name",)
-
-
-class TeamQueryset(models.QuerySet):
-    """Team queryset."""
-
-    def active(self):
-        """Only active Teams."""
-        current = timezone.now()
-        return self.filter(
-            tournament__active_from__lte=current, tournament__active_until__gt=current
-        )
-
-
-class TeamManager(QueryablePropertiesManager):
-    """Custom manager for Teams."""
-
-    def get_queryset(self):
-        """Get product Queryset."""
-        return TeamQueryset(self.model, using=self._db)
-
-    def active_teams(self):
-        """Only active Teams."""
-        return self.get_queryset().active()
-
-
-class Team(models.Model):
-    """Team of Users that can hand in Submissions for Challenges."""
-
-    name = models.CharField(max_length=100)
-    tournament = models.ForeignKey(
-        Tournament, on_delete=models.PROTECT, related_name="teams"
-    )
-    members = models.ManyToManyField(User)
-    points_account = models.OneToOneField(
-        Account, on_delete=models.PROTECT, related_name="points_team", unique=True
-    )
-    coins_account = models.OneToOneField(
-        Account,
-        on_delete=models.PROTECT,
-        related_name="coins_team",
-        unique=True,
-        null=True,
-        blank=True,
-        default=None,
-    )
-
-    objects = TeamManager()
-
     @property
-    def points(self):
-        """Get points of team."""
-        return self.points_account.balance
+    def active(self):
+        """
+        Get whether tournament is active. An active tournament is
+        a revealed tournament that hasn't expired yet, ones that
+        can still be accessed by players.
 
-    def __str__(self):
-        """Convert this object to string."""
-        return f"{self.name}"
+        ----
 
-    class Meta:
-        """Meta class."""
+        Note that active tournaments are a subset of revealed tournaments.
 
-        ordering = ("name",)
-        unique_together = (
-            "name",
-            "tournament",
-        )
+        ----
 
+        :param: None
 
-class Item(models.Model):
-    """Item bought by a Team."""
+        :return: ``True`` if it is revealed, ``False`` otherwise
+        :rtype: bool
+        """
 
-    name = models.CharField(max_length=100)
-    price = models.PositiveIntegerField()
-    description = models.TextField()
-    item = models.ForeignKey(
-        StoreItem,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="bought_items",
-    )
-    transaction = models.ForeignKey(
-        Transaction, on_delete=models.SET_NULL, null=True, blank=True
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    property_of = models.ForeignKey(
-        Team, on_delete=models.CASCADE, related_name="items"
-    )
-    used = models.BooleanField(default=False)
-    used_at = models.DateTimeField(null=True, blank=True)
-
-    def save(self, *args, **kwargs):
-        """Set used_at on saved."""
-        try:
-            old_instance = Item.objects.get(id=self.id)
-        except Item.DoesNotExist:
-            old_instance = None
-
-        if old_instance is not None and not old_instance.used and self.used:
-            self.used_at = timezone.now()
-        elif old_instance is None and self.used:
-            self.used_at = timezone.now()
-
-        super(Item, self).save(*args, **kwargs)
-
-    def __str__(self):
-        """Convert this object to string."""
-        return f"{self.name} ({self.property_of})"
+        current_time = timezone.now()
+        return self.revealed and self.active_until >= current_time
