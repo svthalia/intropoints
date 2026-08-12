@@ -32,7 +32,7 @@ module "sideproject" {
 
   s3_buckets = {
     "media" = {
-      versioning = "Disabled"
+      versioning = "Enabled"
     }
   }
 
